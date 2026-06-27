@@ -1,0 +1,54 @@
+name: release
+
+# Builds the skill bundle and attaches it to a GitHub Release.
+# Runs automatically whenever you PUBLISH a release on the GitHub
+# website (Releases -> Draft a new release -> Publish). No terminal needed.
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write   # required to upload the zip to the release
+
+jobs:
+  build-and-attach:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo at this release's tag
+        uses: actions/checkout@v4
+
+      - name: Sanity-check the skill before bundling
+        run: |
+          test -f SKILL.md
+          missing=0
+          for p in $(grep -oE '(scripts|references)/[A-Za-z0-9_./-]+' SKILL.md | sort -u); do
+            [ -f "$p" ] || { echo "MISSING $p"; missing=1; }
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo "::error::Skill references files that don't resolve — refusing to release a broken bundle"
+            exit 1
+          fi
+          python3 -m py_compile scripts/check_visibility.py
+
+      - name: Build the skill bundle
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          rm -rf dist
+          mkdir -p dist/ai-crawler-visibility
+          cp SKILL.md dist/ai-crawler-visibility/
+          cp -r scripts references dist/ai-crawler-visibility/
+          [ -f README.md ] && cp README.md dist/ai-crawler-visibility/ || true
+          [ -f LICENSE ] && cp LICENSE dist/ai-crawler-visibility/ || true
+          find dist -name '__pycache__' -type d -prune -exec rm -rf {} +
+          find dist -name '*.pyc' -delete
+          cd dist
+          zip -r "ai-crawler-visibility-${VERSION}.zip" ai-crawler-visibility
+          echo "--- bundle contents ---"
+          unzip -l "ai-crawler-visibility-${VERSION}.zip"
+
+      - name: Attach the bundle to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip
