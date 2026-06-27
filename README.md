@@ -34,13 +34,13 @@ This is a [Claude Code Agent Skill](https://docs.claude.com/en/docs/claude-code/
 
 **Personal (available in every project):**
 ```bash
-git clone https://github.com/<merqrylabs>/ai-crawler-visibility.git \
+git clone https://github.com/MerqryLabs/ai-crawler-visibility.git \
   ~/.claude/skills/ai-crawler-visibility
 ```
 
 **Project-scoped (just this repo):**
 ```bash
-git clone https://github.com/<merqrylabs>/ai-crawler-visibility.git \
+git clone https://github.com/MerqryLabs/ai-crawler-visibility.git \
   ./.claude/skills/ai-crawler-visibility
 ```
 
